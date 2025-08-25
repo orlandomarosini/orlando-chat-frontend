@@ -37,7 +37,6 @@
       font-size: 16px;
       line-height: 1.4;
       white-space: pre-wrap;
-      word-wrap: break-word;
     }
 
     .user {
@@ -56,28 +55,24 @@
 
     #inputArea {
       display: flex;
-      flex-direction: column;
-      padding: 10px 15px;
+      padding: 15px;
       background-color: #fff;
       border-top: 1px solid #ccc;
     }
 
     textarea {
+      flex: 1;
       resize: none;
       height: 60px;
       font-size: 16px;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 10px;
-      margin-bottom: 8px;
-    }
-
-    input[type="file"] {
-      margin-bottom: 8px;
     }
 
     button {
-      padding: 10px;
+      margin-left: 10px;
+      padding: 0 20px;
       font-size: 16px;
       background-color: #333;
       color: white;
@@ -89,12 +84,6 @@
     button:hover {
       background-color: #555;
     }
-
-    img.preview {
-      max-width: 100%;
-      border-radius: 10px;
-      margin-top: 8px;
-    }
   </style>
 </head>
 <body>
@@ -103,44 +92,27 @@
 
   <div id="inputArea">
     <textarea id="promptInput" placeholder="Type your message..."></textarea>
-    <input type="file" id="imageInput" accept="image/*" />
     <button onclick="sendPrompt()">Send</button>
   </div>
 
   <script>
     async function sendPrompt() {
       const input = document.getElementById("promptInput");
-      const imageInput = document.getElementById("imageInput");
       const chat = document.getElementById("chatContainer");
       const prompt = input.value.trim();
-      const image = imageInput.files[0];
 
-      if (!prompt && !image) return;
+      if (!prompt) return;
 
-      // Show user message
-      if (prompt) {
-        const userMsg = document.createElement("div");
-        userMsg.className = "message user";
-        userMsg.innerText = prompt;
-        chat.appendChild(userMsg);
-      }
-
-      if (image) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const imgTag = document.createElement("img");
-          imgTag.className = "preview user";
-          imgTag.src = reader.result;
-          chat.appendChild(imgTag);
-        };
-        reader.readAsDataURL(image);
-      }
-
+      // Add user message
+      const userMsg = document.createElement("div");
+      userMsg.className = "message user";
+      userMsg.innerText = prompt;
+      chat.appendChild(userMsg);
       chat.scrollTop = chat.scrollHeight;
-      input.value = "";
-      imageInput.value = "";
 
-      // Show AI thinking message
+      input.value = "";
+
+      // Add thinking bubble
       const aiMsg = document.createElement("div");
       aiMsg.className = "message ai";
       aiMsg.innerText = "Thinking...";
@@ -148,13 +120,12 @@
       chat.scrollTop = chat.scrollHeight;
 
       try {
-        const formData = new FormData();
-        formData.append("prompt", prompt);
-        if (image) formData.append("image", image);
-
         const res = await fetch("https://wix-ai-api.vercel.app/api/chat", {
           method: "POST",
-          body: formData
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ prompt })
         });
 
         const data = await res.json();
@@ -163,4 +134,16 @@
         aiMsg.innerText = "Something went wrong. Please try again later.";
       }
 
-      chat.scrollTop = chat.scrollHeigh
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    // Optional: Allow pressing Enter to send message
+    document.getElementById("promptInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendPrompt();
+      }
+    });
+  </script>
+</body>
+</html>
