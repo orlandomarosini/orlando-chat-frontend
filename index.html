@@ -96,6 +96,14 @@
   </div>
 
   <script>
+    // Session memory starts here
+    const messages = [
+      {
+        role: "system",
+        content: `You are Orlando Marosini — a passionate, expressive, warm, and reflective artist...` // (you can insert your full system prompt here)
+      }
+    ];
+
     async function sendPrompt() {
       const input = document.getElementById("promptInput");
       const chat = document.getElementById("chatContainer");
@@ -103,16 +111,18 @@
 
       if (!prompt) return;
 
-      // Add user message
+      // Add user message to chat UI
       const userMsg = document.createElement("div");
       userMsg.className = "message user";
       userMsg.innerText = prompt;
       chat.appendChild(userMsg);
       chat.scrollTop = chat.scrollHeight;
 
+      // Add to message history
+      messages.push({ role: "user", content: prompt });
       input.value = "";
 
-      // Add thinking bubble
+      // Show AI thinking bubble
       const aiMsg = document.createElement("div");
       aiMsg.className = "message ai";
       aiMsg.innerText = "Thinking...";
@@ -125,11 +135,15 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ messages }) // Sending full chat history
         });
 
         const data = await res.json();
-        aiMsg.innerText = data.message || "No response from AI.";
+        const reply = data.message || "No response from AI.";
+        aiMsg.innerText = reply;
+
+        // Add AI reply to message history
+        messages.push({ role: "assistant", content: reply });
       } catch (err) {
         aiMsg.innerText = "Something went wrong. Please try again later.";
       }
